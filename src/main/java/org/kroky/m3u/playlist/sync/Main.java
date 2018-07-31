@@ -1,5 +1,6 @@
 package org.kroky.m3u.playlist.sync;
 
+import java.awt.Desktop;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,16 +40,16 @@ public class Main {
         compare(dirNames, playlistName);
     }
 
-    private static void compare(Set<String> dirPaths, String playlistPath) {
+    private static void compare(Set<String> dirPathNames, String playlistPathName) {
         Set<String> musicFiles = new TreeSet<>(
-                dirPaths.stream().map(dirName -> getFilesFromDir(Paths.get(dirName)).stream()).flatMap(s -> s)
+                dirPathNames.stream().map(dirName -> getFilesFromDir(Paths.get(dirName)).stream()).flatMap(s -> s)
                         .map(path -> path.toString()).collect(Collectors.toList()));
-        System.out.println(musicFiles);
         try {
-            TreeSet<String> dirNames = new TreeSet<>(dirPaths.stream()
+            TreeSet<String> dirNames = new TreeSet<>(dirPathNames.stream()
                     .map(dirPath -> Paths.get(dirPath).getFileName().toString()).collect(Collectors.toList()));
-            Set<String> playlistEntries = new TreeSet<>(Files.lines(Paths.get(playlistPath))
-                    .filter(line -> startsWith(line, dirNames)).collect(Collectors.toList()));
+            Path playlistPath = Paths.get(playlistPathName).toAbsolutePath().normalize();
+            Set<String> playlistEntries = new TreeSet<>(
+                    Files.lines(playlistPath).filter(line -> startsWith(line, dirNames)).collect(Collectors.toList()));
             Path outputDir = Paths.get(".").toAbsolutePath().normalize();
 
             Path filesOutput = outputDir.resolve("_fileEntries.txt").toAbsolutePath().normalize();
@@ -56,10 +57,19 @@ public class Main {
 
             Path playlistOutput = outputDir.resolve("_playlistEntries.txt").toAbsolutePath().normalize();
             Files.write(playlistOutput, playlistEntries);
-            System.out.println(playlistEntries);
             System.out.println("Results written to:");
             System.out.println(filesOutput);
             System.out.println(playlistOutput);
+            byte[] filesContents = Files.readAllBytes(filesOutput);
+            byte[] playlistContents = Files.readAllBytes(playlistOutput);
+            boolean equals = Arrays.equals(filesContents, playlistContents);
+            if (equals) {
+                System.out.println("You are SYNCED!");
+            } else {
+                System.out.println("The content is DIFFERENT!");
+                System.out.println("Playlist path: " + playlistPath);
+                Desktop.getDesktop().open(playlistPath.toFile());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
