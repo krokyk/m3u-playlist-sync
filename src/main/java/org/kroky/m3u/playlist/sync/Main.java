@@ -26,7 +26,22 @@ import org.apache.commons.io.FilenameUtils;
 public class Main {
 
     public static final Path OUTPUT_DIR = Paths.get(".").toAbsolutePath().normalize();
-    public static final Comparator<String> LEX_COMP = (s1, s2) -> s1.compareToIgnoreCase(s2);
+    //    public static final Comparator<String> LEX_COMP = (s1, s2) -> s1.compareToIgnoreCase(s2);
+    public static final Comparator<String> LEX_COMP = (path1, path2) -> {
+        String[] path1parts = path1.split("\\\\");
+        String[] path2parts = path2.split("\\\\");
+
+        int minSize = Math.min(path1parts.length, path2parts.length);
+
+        for (int i = 0; i < minSize; i++) {
+            int compareResult = path1parts[i].compareToIgnoreCase(path2parts[i]);
+            if (compareResult != 0) {
+                return compareResult;
+            }
+        }
+
+        return Integer.compare(path1parts.length, path2parts.length);
+    };
 
     public static void main(String[] args) throws Exception {
         Options options = createOptions();
