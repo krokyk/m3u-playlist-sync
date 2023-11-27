@@ -44,7 +44,7 @@ public class Main {
 		String playlistName = cmd.getOptionValue("p");
 		File playlistFile = new File(playlistName);
 		if (cmd.hasOption("u")) {
-			Path dirPlaylist = generatePlaylistFromDirs(dirPathNames);
+			Path dirPlaylist = generatePlaylistFromDirs(dirPathNames, playlistFile);
 			if (playlistFile.isFile()) {
 				String backupPlaylistName = String.format("%s.%s", playlistFile.getName(), System.currentTimeMillis());
 				FileUtils.copyFile(playlistFile, dirPlaylist.getParent().resolve(backupPlaylistName).toFile());
@@ -58,7 +58,7 @@ public class Main {
 	}
 
 	private static void compare(Set<String> dirPathNames, File playlistFile) throws Exception {
-		Path dirPlaylist = generatePlaylistFromDirs(dirPathNames);
+		Path dirPlaylist = generatePlaylistFromDirs(dirPathNames, playlistFile);
 
 		if (!playlistFile.isFile()) {
 			System.out.println(String.format("No such playlist exists: %s", playlistFile));
@@ -88,10 +88,10 @@ public class Main {
 		}
 	}
 
-	private static Path generatePlaylistFromDirs(Set<String> dirPathNames) throws IOException {
+	private static Path generatePlaylistFromDirs(Set<String> dirPathNames, File playlistFile) throws IOException {
 		Set<String> musicFiles = new TreeSet<>(
-				dirPathNames.stream().map(dirName -> getFilesFromDir(Paths.get(dirName)).stream()).flatMap(s -> s)
-						.map(path -> path.toString()).collect(Collectors.toList()));
+				dirPathNames.stream().map(dirName -> getFilesFromDir(Paths.get(dirName), playlistFile).stream())
+						.flatMap(s -> s).map(path -> path.toString()).collect(Collectors.toList()));
 
 		Path filesOutput = OUTPUT_DIR.resolve("_fileEntries.txt").toAbsolutePath().normalize();
 		writeBomAndLines(filesOutput, musicFiles);
@@ -116,19 +116,16 @@ public class Main {
 		return strSet.stream().filter(dirName -> str.startsWith(dirName)).findFirst().isPresent();
 	}
 
-	private static Set<Path> getFilesFromDir(Path dir) {
+	private static Set<Path> getFilesFromDir(Path dir, File playlistFile) {
 
 		try {
 			return Files.find(dir, Integer.MAX_VALUE, (p, a) -> isMusicFile(p, a))
-					.map(absoluteFile -> relativeToDir(dir, absoluteFile, true)).collect(Collectors.toSet());
+					.map(absoluteFile -> playlistFile.toPath().getParent().relativize(absoluteFile))
+					.collect(Collectors.toSet());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return Collections.emptySet();
-	}
-
-	private static Path relativeToDir(Path absoluteDir, Path absoluteFile, boolean includeParent) {
-		return includeParent ? absoluteDir.getParent().relativize(absoluteFile) : absoluteDir.relativize(absoluteFile);
 	}
 
 	private static boolean isMusicFile(Path p, BasicFileAttributes a) {
