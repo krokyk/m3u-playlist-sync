@@ -26,7 +26,6 @@ import org.apache.commons.io.FilenameUtils;
 public class Main {
 
     public static final Path OUTPUT_DIR = Paths.get(".").toAbsolutePath().normalize();
-    //    public static final Comparator<String> LEX_COMP = (s1, s2) -> s1.compareToIgnoreCase(s2);
     public static final Comparator<String> LEX_COMP = (path1, path2) -> {
         String[] path1parts = path1.split("\\\\");
         String[] path2parts = path2.split("\\\\");
@@ -60,21 +59,21 @@ public class Main {
         String playlistName = cmd.getOptionValue("p");
         File playlistFile = new File(playlistName);
         if (cmd.hasOption("u")) {
-            Path dirPlaylist = generatePlaylistFromDirs(dirPathNames);
+            Path dirPlaylist = generatePlaylistFromDirs(dirPathNames, playlistFile);
             if (playlistFile.isFile()) {
                 String backupPlaylistName = String.format("%s.%s", playlistFile.getName(), System.currentTimeMillis());
                 FileUtils.copyFile(playlistFile, dirPlaylist.getParent().resolve(backupPlaylistName).toFile());
                 FileUtils.delete(playlistFile);
             }
             FileUtils.copyFile(dirPlaylist.toFile(), playlistFile);
-            System.out.println(String.format("New playlist at: %s", playlistFile));
+            System.out.println(String.format("New playlist at: %s", playlistFile.getAbsolutePath()));
         } else {
             compare(dirPathNames, playlistFile);
         }
     }
 
     private static void compare(Set<String> dirPathNames, File playlistFile) throws Exception {
-        Path dirPlaylist = generatePlaylistFromDirs(dirPathNames);
+        Path dirPlaylist = generatePlaylistFromDirs(dirPathNames, playlistFile);
 
         if (!playlistFile.isFile()) {
             System.out.println(String.format("No such playlist exists: %s", playlistFile));
@@ -103,15 +102,15 @@ public class Main {
         }
     }
 
-    private static Path generatePlaylistFromDirs(Set<String> dirPathNames) throws IOException {
+    private static Path generatePlaylistFromDirs(Set<String> dirPathNames, File playlistFile) throws IOException {
         Set<String> musicFiles = new TreeSet<>(LEX_COMP);
+        Path playlistParent = playlistFile.toPath().toAbsolutePath().getParent(); // e:\Google Drive\Music\_vyber
 
         for (String dirName : dirPathNames) {
-            Path dir = Paths.get(dirName); // e:\Google Drive\Music\_vyber\MELODEATH
-            Path parentDir = dir.getParent(); // e:\Google Drive\Music\_vyber
+            Path dir = Paths.get(dirName).toAbsolutePath(); // e:\Google Drive\Music\_vyber\BALLADS AND LOVE SONGS\LARA FABIAN - 1991 - Lara Fabian
             musicFiles.addAll(Files.walk(dir) //
                     .filter(Main::isMusicFile) // get a full path to the music file
-                    .map(path -> parentDir.relativize(path)) // cut the parentDir from the path's beginning
+                    .map(path -> playlistParent.relativize(path)) // relativize the music file's path to the playlist parent dir
                     .map(Path::toString) // make String from it
                     .collect(Collectors.toList())); // collect
         }
