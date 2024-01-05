@@ -2,8 +2,8 @@ apply plugin: 'application'
 
 mainClassName = 'org.kroky.m3u.playlist.sync.Main'
                              
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+//sourceCompatibility = 1.8
+//targetCompatibility = 1.8
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
-    implementation group: 'commons-io', name: 'commons-io', version: '2.14.0'
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.6.0'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.15.1'
 }
 
