@@ -17,4 +17,4 @@ gradle-app.setting
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
 /_fileEntries.txt
-/_playlistEntries.txt
+/*.m3u8.*
